@@ -10,6 +10,7 @@
     "@types/node": "^16.18.3",
     "@types/react": "^18.0.24",
     "@types/react-dom": "^18.0.8",
+    "@types/three": "^0.144.0",
     "colyseus.js": "^0.14.13",
     "jotai": "^1.9.1",
     "korean-random-words": "^1.0.3",
@@ -51,6 +52,7 @@
     "eslint": "^8.26.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-react": "^7.31.10",
-    "eslint-plugin-react-hooks": "^4.6.0"
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "three": "^0.146.0"
   }
 }
