@@ -1,5 +1,5 @@
-import * as Colyseus from "colyseus.js";
-import { genderType, playType } from "./useMultiplay";
+import * as Colyseus from 'colyseus.js';
+import { genderType, playType } from './useMultiplay';
 
 type GenderType = keyof typeof genderType;
 
@@ -79,14 +79,6 @@ export interface Move {
 }
 
 export interface UseMultiPlay {
-  lobby: { channels: CustomColyseusClient[] | undefined; isLive: boolean };
-  players: Players | undefined;
-  messages: ChannelMessage[] | undefined;
-  myPlayer: CustomColyseusClient | undefined;
-  playerMove: (move: Move) => void;
-  playerChat: (message: string) => void;
   connectToLobby: () => Promise<void>;
-  connectToChannel: (
-    connectToChannelParams: ConnectToChannelParams
-  ) => Promise<void>;
+  connectToChannel: (connectToChannelParams: ConnectToChannelParams) => Promise<void>;
 }

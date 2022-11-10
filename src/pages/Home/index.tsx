@@ -1,10 +1,14 @@
 import { useEffect, useMemo } from 'react';
+import { useAtomValue } from 'jotai';
 
-import { HomeContainer, MultiplayArea } from './styles';
+import { HomeContainer } from './styles';
 
 import useMultiplay from '../../hooks/multiplay/useMultiplay';
 import { UserCustomOptions } from '../../hooks/multiplay/types';
 import { canvasInitialize, othersAnimate } from '../../3js/mesh';
+import { multiplayLobbyAtom, multiplayMyPlayerAtom, multiplayPlayersAtom } from '../../atoms';
+
+import { useSpacesInfiniteQuery } from '../../hooks/react-query/infinite-query';
 
 const customOptions: UserCustomOptions = {
   type: 'female',
@@ -18,7 +22,14 @@ const customOptions: UserCustomOptions = {
 const SPACE_ID = 'abcde';
 
 function Home(): JSX.Element {
-  const { players, myPlayer, lobby, connectToLobby, connectToChannel } = useMultiplay();
+  const lobby = useAtomValue(multiplayLobbyAtom);
+  const myPlayer = useAtomValue(multiplayMyPlayerAtom);
+  const players = useAtomValue(multiplayPlayersAtom);
+  const { connectToLobby, connectToChannel } = useMultiplay();
+
+  const { spaces } = useSpacesInfiniteQuery({
+    userToken: 'f639d45654d303c806d43f713370e030a9ea49e6',
+  });
 
   const isMultiplayReady = useMemo(
     () => lobby.isLive && !!players && !!myPlayer,
@@ -55,6 +66,12 @@ function Home(): JSX.Element {
   }, []);
 
   useEffect(() => {
+    if (spaces) {
+      console.log(spaces);
+    }
+  }, [spaces]);
+
+  useEffect(() => {
     if (isMultiplayReady && myPlayer) {
       canvasInitialize(myPlayer);
     }
@@ -75,7 +92,7 @@ function Home(): JSX.Element {
           [Channel] {channel.roomId} : {channel.clients} 명
         </p>
       ))}
-      <MultiplayArea />
+      {/* <MultiplayArea /> */}
     </HomeContainer>
   );
 }

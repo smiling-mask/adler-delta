@@ -13,3 +13,8 @@ export const MultiplayArea = styled.div.attrs({ id: 'multiplay-area' })`
   width: 37.5rem;
   height: 50rem;
 `;
+
+export const ReactPlayerWrapper = styled.div`
+  width: 62.5rem;
+  height: 62.5rem;
+`;

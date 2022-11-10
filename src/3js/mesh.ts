@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-import { CustomColyseusClient, Move, Players } from '../hooks/multiplay/types';
+import { CustomColyseusClient, Players } from '../hooks/multiplay/types';
 
 type CubeMap = Record<string, THREE.Mesh<THREE.BoxGeometry, THREE.MeshBasicMaterial>>;
 

@@ -1,6 +1,6 @@
-import { useAtomCallback, useAtomValue } from "jotai/utils";
-import * as Colyseus from "colyseus.js";
-import * as PhraseGen from "korean-random-words";
+import { useAtomCallback } from 'jotai/utils';
+import * as Colyseus from 'colyseus.js';
+import * as PhraseGen from 'korean-random-words';
 
 import {
   ChannelMessage,
@@ -9,19 +9,19 @@ import {
   Move,
   PlayerRoomState,
   UseMultiPlay,
-} from "./types";
+} from './types';
 import {
   multiplayLobbyAtom,
   multiplayMessageAtom,
   multiplayMyPlayerAtom,
   multiplayPlayersAtom,
-} from "../../atoms";
+} from '../../atoms';
 
-const COLYSEUS_BASE_URL = "wss://multiplay.adler3d.com:443";
+const COLYSEUS_BASE_URL = 'wss://multiplay.adler3d.com:443';
 
 export const genderType = {
-  male: "M",
-  female: "F",
+  male: 'M',
+  female: 'F',
 } as const;
 
 export const playType = {
@@ -30,37 +30,29 @@ export const playType = {
 } as const;
 
 const COLYSEUS_COMMANDS = {
-  lobby: "lobby",
-  rooms: "rooms",
-  plus: "+",
-  minus: "-",
-  channel: "game",
-  move: "move",
-  chat: "chat",
+  lobby: 'lobby',
+  rooms: 'rooms',
+  plus: '+',
+  minus: '-',
+  channel: 'game',
+  move: 'move',
+  chat: 'chat',
 } as const;
 
 const colyseusClient = new Colyseus.Client(COLYSEUS_BASE_URL);
 
 const phraseGen = new PhraseGen({
-  delimiter: " ",
+  delimiter: ' ',
 });
 
 function useMultiplay(): UseMultiPlay {
-  const lobby = useAtomValue(multiplayLobbyAtom);
-  const players = useAtomValue(multiplayPlayersAtom);
-  const messages = useAtomValue(multiplayMessageAtom);
-  const myPlayer = useAtomValue(multiplayMyPlayerAtom);
-
   const onJoinLobby = useAtomCallback((_get, set, lobby: Colyseus.Room) => {
-    lobby.onMessage(
-      COLYSEUS_COMMANDS.rooms,
-      (lobby: CustomColyseusClient[]) => {
-        set(multiplayLobbyAtom, {
-          isLive: true,
-          channels: [...lobby],
-        });
-      }
-    );
+    lobby.onMessage(COLYSEUS_COMMANDS.rooms, (lobby: CustomColyseusClient[]) => {
+      set(multiplayLobbyAtom, {
+        isLive: true,
+        channels: [...lobby],
+      });
+    });
 
     lobby.onMessage(COLYSEUS_COMMANDS.plus, ([roomId, room]) => {
       set(multiplayLobbyAtom, (prevLobbyData) => {
@@ -70,9 +62,7 @@ function useMultiplay(): UseMultiPlay {
             channels: undefined,
           };
 
-        if (
-          prevLobbyData.channels.find((channel) => channel.roomId === roomId)
-        ) {
+        if (prevLobbyData.channels.find((channel) => channel.roomId === roomId)) {
           return {
             isLive: prevLobbyData.isLive,
             channels: prevLobbyData.channels.map((activeRoom) => {
@@ -118,19 +108,11 @@ function useMultiplay(): UseMultiPlay {
       });
   };
 
-  const onJoinChannel = useAtomCallback(
-    (get, set, channel: Colyseus.Room<PlayerRoomState>) => {
-      set(multiplayMyPlayerAtom, channel as CustomColyseusClient);
+  const onJoinChannel = useAtomCallback((get, set, channel: Colyseus.Room<PlayerRoomState>) => {
+    set(multiplayMyPlayerAtom, channel as CustomColyseusClient);
 
-      channel.state.players.onAdd = (player, sessionId) => {
-        player.onChange = () => {
-          set(multiplayPlayersAtom, (activePlayers) => {
-            if (activePlayers) return { ...activePlayers, [sessionId]: player };
-
-            return { [sessionId]: player };
-          });
-        };
-
+    channel.state.players.onAdd = (player, sessionId) => {
+      player.onChange = () => {
         set(multiplayPlayersAtom, (activePlayers) => {
           if (activePlayers) return { ...activePlayers, [sessionId]: player };
 
@@ -138,47 +120,48 @@ function useMultiplay(): UseMultiPlay {
         });
       };
 
-      channel.state.players.onRemove = (_player, sessionId) => {
-        const myPlayer = get(multiplayMyPlayerAtom);
+      set(multiplayPlayersAtom, (activePlayers) => {
+        if (activePlayers) return { ...activePlayers, [sessionId]: player };
 
-        if (myPlayer?.roomId === sessionId) {
-          set(multiplayPlayersAtom, undefined);
-          set(multiplayMessageAtom, undefined);
-          set(multiplayMyPlayerAtom, undefined);
+        return { [sessionId]: player };
+      });
+    };
+
+    channel.state.players.onRemove = (_player, sessionId) => {
+      const myPlayer = get(multiplayMyPlayerAtom);
+
+      if (myPlayer?.roomId === sessionId) {
+        set(multiplayPlayersAtom, undefined);
+        set(multiplayMessageAtom, undefined);
+        set(multiplayMyPlayerAtom, undefined);
+      }
+
+      set(multiplayPlayersAtom, (activePlayers) => {
+        if (activePlayers) {
+          const players = { ...activePlayers };
+
+          delete players[sessionId];
+
+          return players;
         }
 
-        set(multiplayPlayersAtom, (activePlayers) => {
-          if (activePlayers) {
-            const players = { ...activePlayers };
-
-            delete players[sessionId];
-
-            return players;
-          }
-
-          return undefined;
-        });
-      };
-
-      channel.onMessage<ChannelMessage>(COLYSEUS_COMMANDS.chat, (message) => {
-        set(multiplayMessageAtom, (prevMessages) => {
-          if (!prevMessages) return [message];
-
-          return [...prevMessages, message];
-        });
+        return undefined;
       });
-    }
-  );
+    };
 
-  const connectToChannel = async ({
-    spaceId,
-    user,
-  }: ConnectToChannelParams) => {
-    const UNAUTHENTICATED_USERNAME = "Unauthenticated";
-    const temporaryNameArray: string[] = phraseGen.generatePhrase().split(" ");
-    const temporaryName: string = temporaryNameArray[1].concat(
-      ` ${temporaryNameArray[2]}`
-    );
+    channel.onMessage<ChannelMessage>(COLYSEUS_COMMANDS.chat, (message) => {
+      set(multiplayMessageAtom, (prevMessages) => {
+        if (!prevMessages) return [message];
+
+        return [...prevMessages, message];
+      });
+    });
+  });
+
+  const connectToChannel = async ({ spaceId, user }: ConnectToChannelParams) => {
+    const UNAUTHENTICATED_USERNAME = 'Unauthenticated';
+    const temporaryNameArray: string[] = phraseGen.generatePhrase().split(' ');
+    const temporaryName: string = temporaryNameArray[1].concat(` ${temporaryNameArray[2]}`);
 
     await colyseusClient
       .joinOrCreate<PlayerRoomState>(COLYSEUS_COMMANDS.channel, {
@@ -186,7 +169,7 @@ function useMultiplay(): UseMultiPlay {
         ...user,
         username: user.username ?? UNAUTHENTICATED_USERNAME,
         nickname: user.nickname ?? temporaryName,
-        profile: user.profile ?? "",
+        profile: user.profile ?? '',
         playType: playType[user.playType],
         gender: genderType[user.type],
       })
@@ -215,12 +198,6 @@ function useMultiplay(): UseMultiPlay {
   });
 
   return {
-    lobby,
-    players,
-    messages,
-    myPlayer,
-    playerMove,
-    playerChat,
     connectToLobby,
     connectToChannel,
   };
